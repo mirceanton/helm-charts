@@ -1,0 +1,42 @@
+---
+name: Build and Push Helm Chart
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "charts/k8s-resource/**"
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Token
+        uses: actions/create-github-app-token@v1.10.4
+        id: app-token
+        with:
+          app-id: "${{ secrets.BOT_APP_ID }}"
+          private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
+
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+        with:
+          token: "${{ steps.app-token.outputs.token }}"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.2.0
+        with:
+          version: v3.15.4
+
+      - name: Helm login to GHCR
+        run: |
+          echo ${{ secrets.GHCR_RW_TOKEN }} | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
+
+      - name: Package Helm chart
+        working-directory: ./charts/k8s-resource
+        run: helm package .
+
+      - name: Push Helm chart to GHCR
+        working-directory: ./charts/k8s-resource
+        run: helm push $(ls *.tgz) oci://ghcr.io/${{ github.repository }}
