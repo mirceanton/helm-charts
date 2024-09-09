@@ -1,0 +1,24 @@
+Your resource has been successfully deployed!
+
+Here are the details of the deployed resource:
+
+- Name: {{ .Values.metadata.name | default "Not specified" }}
+- Namespace: {{ .Values.metadata.namespace | default "default" }}
+- Kind: {{ .Values.kind }}
+- API Version: {{ .Values.apiVersion }}
+
+You can view the resource with the following commands:
+
+1. Get the resource details:
+
+   kubectl get {{ .Values.kind | lower }} {{ .Values.metadata.name }} -n {{ .Values.metadata.namespace | default "default" }}
+
+2. Describe the resource to see more details:
+
+   kubectl describe {{ .Values.kind | lower }} {{ .Values.metadata.name }} -n {{ .Values.metadata.namespace | default "default" }}
+
+3. To check the status of the resource, run:
+
+   kubectl get {{ .Values.kind | lower }} -n {{ .Values.metadata.namespace | default "default" }}
+
+Thank you for using this Helm chart!

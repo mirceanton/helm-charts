@@ -1,0 +1,7 @@
+---
+apiVersion: {{ .Values.apiVersion }}
+kind: {{ .Values.kind }}
+metadata:
+{{ toYaml .Values.metadata | indent 2 }}
+spec:
+{{ toYaml .Values.spec | indent 2 }}
