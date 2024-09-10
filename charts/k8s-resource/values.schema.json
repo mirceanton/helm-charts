@@ -64,32 +64,10 @@
 			"additionalProperties": true,
 			"description": "Metadata of the resource you're creating.",
 			"properties": {
-				"annotations": {
-					"additionalProperties": true,
-					"description": "Annotations of the resource you're creating.",
-					"required": [],
-					"title": "annotations",
-					"type": "object"
-				},
-				"labels": {
-					"additionalProperties": true,
-					"description": "Labels of the resource you're creating.",
-					"required": [],
-					"title": "labels",
-					"type": "object"
-				},
 				"name": {
 					"default": "",
-					"description": "Name of the resource you're creating.",
 					"required": [],
 					"title": "name",
-					"type": "string"
-				},
-				"namespace": {
-					"default": "default",
-					"description": "Namespace of the resource you're creating.",
-					"required": [],
-					"title": "namespace",
 					"type": "string"
 				}
 			},
@@ -109,8 +87,7 @@
 	},
 	"required": [
 		"apiVersion",
-		"kind",
-		"metadata"
+		"kind"
 	],
 	"type": "object"
 }
