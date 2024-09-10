@@ -1,0 +1,34 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Renovate
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Dry Run
+        default: "false"
+        required: false
+      log-level:
+        description: Log Level
+        default: debug
+        required: false
+  pull_request:
+    paths:
+      - ".github/workflows/renovate.yaml"
+      - ".github/configs/renovate/*.json5"
+      - "renovate.json5"
+  schedule:
+    - cron: "0 * * * *" # hourly
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  renovate:
+    uses: mirceanton/reusable-workflows/.github/workflows/renovate.yaml@17d8ef4df857d93b905170956fbbcd56b296e8bb
+    secrets: inherit
+    with:
+      dry-run: "${{ inputs.dry-run == true || github.event_name == 'pull_request' }}"
+      log-level: "${{ inputs.log-level || 'debug' }}"
