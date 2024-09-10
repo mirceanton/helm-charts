@@ -5,7 +5,7 @@
 # examples: ["v1", "apps/v1", "batch/v1"]
 # @schema
 # -- The API version of the Kubernetes resource you're creating.
-apiVersion: ""
+apiVersion: "v1"
 
 # @schema
 # required: true
@@ -13,7 +13,7 @@ apiVersion: ""
 # examples: ["Pod", "Service", "Deployment"]
 # @schema
 # -- This defines the type of resource, such as "Pod", "Service", "Deployment", etc.
-kind: ""
+kind: "Pod"
 
 # @schema
 # required: true
@@ -27,7 +27,7 @@ metadata:
   # type: string
   # @schema
   # -- Name of the resource you're creating.
-  name: ""
+  name: "example"
 
   # @schema
   # required: false
@@ -58,7 +58,12 @@ metadata:
 # additionalProperties: true
 # @schema
 # -- Spec of the resource you're creating.
-spec: {}
+spec:
+  containers:
+    - name: "busybox"
+      image: "busybox"
+      ports:
+        - containerPort: 80
 
 # @schema
 # required: false
