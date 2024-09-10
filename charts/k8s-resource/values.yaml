@@ -1,12 +1,79 @@
 ---
-# apiVersion -- (string) The API version of the Kubernetes resource you're creating.
-apiVersion:
+# @schema
+# required: true
+# type: string
+# examples: ["v1", "apps/v1", "batch/v1"]
+# @schema
+# -- The API version of the Kubernetes resource you're creating.
+apiVersion: ""
 
-# This defines the type of resource, such as "Pod", "Service", "Deployment", etc.
-kind:
+# @schema
+# required: true
+# type: string
+# examples: ["Pod", "Service", "Deployment"]
+# @schema
+# -- This defines the type of resource, such as "Pod", "Service", "Deployment", etc.
+kind: ""
 
-# -- (object) metadata Metadata for the Kubernetes resource.
+# @schema
+# required: true
+# type: object
+# additionalProperties: true
+# @schema
+# -- Metadata of the resource you're creating.
 metadata:
+  # @schema
+  # required: true
+  # type: string
+  # @schema
+  # -- Name of the resource you're creating.
+  name: ""
 
-# -- (object) The specification for the Kubernetes resource.
-spec:
+  # @schema
+  # required: false
+  # type: string
+  # @schema
+  # -- Namespace of the resource you're creating.
+  namespace: default
+
+  # @schema
+  # required: false
+  # type: object
+  # additionalProperties: true
+  # @schema
+  # -- Labels of the resource you're creating.
+  labels: {}
+
+  # @schema
+  # required: false
+  # type: object
+  # additionalProperties: true
+  # @schema
+  # -- Annotations of the resource you're creating.
+  annotations: {}
+
+# @schema
+# required: false
+# type: object
+# additionalProperties: true
+# @schema
+# -- Spec of the resource you're creating.
+spec: {}
+
+# @schema
+# required: false
+# type: array
+# items:
+#   type: object
+#   properties:
+#     apiVersion:
+#       type: string
+#     kind:
+#       type: string
+#     metadata:
+#       type: object
+#     spec:
+#       type: object
+# @schema
+# -- List of resources you're creating.
+items: []
