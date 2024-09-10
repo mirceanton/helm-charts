@@ -1,0 +1,130 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+## Overview
+
+This Helm chart is designed to be primarily used in GitOps scenarios, particularly for users of [FluxCD](https://fluxcd.io/), to help simplify the management of Kubernetes custom resources (`CR`s) and their corresponding custom resource definitions (`CRD`s). It allows you to package standard Kubernetes manifests in a Helm chart while maintaining compatibility with GitOps flows.
+
+This chart was developed to solve a common issue in GitOps setups where the creation of a Custom Resource (`CR`) fails because the corresponding Custom Resource Definition (`CRD`) has not yet been fully deployed. This happens frequently when managing both the operator and its `CR`s within the same Flux `Kustomization`.
+
+This Helm chart solves that problem by allowing you to:
+
+- Package both the `CRD` operator and the corresponding custom resources into a Helm chart.
+- Use the `HelmRelease` `dependsOn` to ensure that the CRs are only created after the operator has been successfully deployed.
+- Maintain consistency by managing dependencies at the `HelmRelease` level, instead of splitting them between `Kustomizations` and `HelmReleases`.
+
+### Design Consideration
+
+The most important design decision behind this Helm chart was to ensure that the `values.yaml` file remains a valid Kubernetes manifest. At any point in time, you should be able to run:
+
+```bash
+kubectl apply -f values.yaml
+```
+
+This will create the same resources as the Helm chart, ensuring that the chart stays closely aligned with standard Kubernetes practices.
+
+### Example Use Cases
+
+This chart is particularly useful in scenarios where you're deploying both an operator and its corresponding custom resources. Here are some example use cases:
+
+- Deploying `CertManager` and a `ClusterIssuer`.
+- Deploying `Mayastor` and a DiskPoo`l.
+- Deploying `TrustManager` and a `Bundle` object.
+- Deploying `Crossplane` and a `CrossplaneProvider`.
+
+In each of these cases, using this Helm chart allows you to control the ordering and dependency between the operator and its custom resource, avoiding issues with `CR` creation failing due to the operator not being fully deployed.
+
+## Installation
+
+To install this chart using Helm, run:
+
+```bash
+helm install <release-name>  -f values.yaml
+```
+
+Make sure your values.yaml contains valid Kubernetes resources as described below.
+
+### Example Values
+
+The `values.yaml` file should contain a valid Kubernetes manifest. This chart supports:
+
+- single resources
+
+    ```yaml
+    ---
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: k8s-resource
+    spec:
+      containers:
+        - name: k8s-resource
+          image: nginx
+    ```
+
+- lists of resources
+
+    ```yaml
+    apiVersion: v1
+    kind: List
+    items:
+    - apiVersion: v1
+        kind: Pod
+        metadata:
+        name: my-nginx-pod
+        namespace: default
+        spec:
+        containers:
+            - name: nginx
+            image: nginx:1.14.2
+    - apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+        name: my-nginx-deployment
+        namespace: default
+        spec:
+        replicas: 2
+        selector:
+            matchLabels:
+            app: nginx
+        template:
+            metadata:
+            labels:
+                app: nginx
+            spec:
+            containers:
+                - name: nginx
+                image: nginx:1.14.2
+    ```
+
+Multi-doc resources are **NOT** supported.
+
+### Using with FluxCD
+
+To use this chart with `FluxCD`, create a `HelmRelease` resource in your Flux repository, and manage the dependency order using `dependsOn`. Here’s an example `HelmRelease` for the custom resources, depending on the operator `HelmRelease`:
+
+```yaml
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: custom-resources
+spec:
+  chart:
+    spec:
+      chart: mirceanton-oci
+      version: 1.0.0
+  dependsOn:
+    - name: operator-helmrelease
+  valuesFrom:
+    - kind: Secret
+      name: cr-values
+```
+
+{{ template "helm-docs.versionFooter" . }}
