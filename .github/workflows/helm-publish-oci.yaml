@@ -39,4 +39,4 @@ jobs:
 
       - name: Push Helm chart to GHCR
         working-directory: ./charts/k8s-resource
-        run: helm push $(ls *.tgz) oci://ghcr.io/${{ github.repository }}
+        run: helm push "$(ls ./*.tgz)" oci://ghcr.io/${{ github.repository }}
