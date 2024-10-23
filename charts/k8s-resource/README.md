@@ -41,7 +41,7 @@ This will create the same resources as the Helm chart, ensuring that the chart s
 This chart is particularly useful in scenarios where you're deploying both an operator and its corresponding custom resources. Here are some example use cases:
 
 - Deploying `CertManager` and a `ClusterIssuer`.
-- Deploying `Mayastor` and a DiskPoo`l.
+- Deploying `Mayastor` and a `DiskPool`.
 - Deploying `TrustManager` and a `Bundle` object.
 - Deploying `Crossplane` and a `CrossplaneProvider`.
 
