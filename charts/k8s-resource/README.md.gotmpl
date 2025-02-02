@@ -8,6 +8,8 @@
 
 {{ template "chart.valuesSection" . }}
 
+Other than that, absolutely anything you provide in your values file will get rendered into the final manifest. Only `apiVersion`, `kind` and `metadata` are enforced as required. Anything else is optional and will be rendered **as provided** into the resulting manifest.
+
 ## Overview
 
 This Helm chart is designed to be primarily used in GitOps scenarios, particularly for users of [FluxCD](https://fluxcd.io/), to help simplify the management of Kubernetes custom resources (`CR`s) and their corresponding custom resource definitions (`CRD`s). It allows you to package standard Kubernetes manifests in a Helm chart while maintaining compatibility with GitOps flows.
@@ -108,23 +110,49 @@ Multi-doc resources are **NOT** supported.
 
 ### Using with FluxCD
 
-To use this chart with `FluxCD`, create a `HelmRelease` resource in your Flux repository, and manage the dependency order using `dependsOn`. Here’s an example `HelmRelease` for the custom resources, depending on the operator `HelmRelease`:
+To use this chart with `FluxCD`, you first need to create a `HelmRepository` for this repo:
 
 ```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/helmrepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: mirceanton-charts
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  timeout: 3m
+  url: oci://ghcr.io/mirceanton/helm-charts
+
+```
+
+Then, you can create a `HelmRelease` resource in your Flux repository, and manage the dependency order using `dependsOn`:
+
+```yaml
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: custom-resources
+  name: cert-manager-cluster-issuer
 spec:
+  interval: 15m
   chart:
     spec:
-      chart: mirceanton-oci
-      version: 1.0.0
+      chart: k8s-resource
+      version: 0.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: mirceanton-charts
+        namespace: flux-system
+
   dependsOn:
-    - name: operator-helmrelease
+    - name: cert-manager
   valuesFrom:
-    - kind: Secret
-      name: cr-values
+    - kind: ConfigMap
+      name: cluster-issuer
 ```
 
 {{ template "helm-docs.versionFooter" . }}

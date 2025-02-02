@@ -1,6 +1,6 @@
 # k8s-resource
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.0.0](https://img.shields.io/badge/AppVersion-0.0.0-informational?style=flat-square)
+![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: N/A](https://img.shields.io/badge/AppVersion-N/A-informational?style=flat-square)
 
 A Helm chart that templates out whatever k8s resource you want.
 
@@ -9,10 +9,10 @@ A Helm chart that templates out whatever k8s resource you want.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | apiVersion | string | `""` | The API version of the Kubernetes resource you're creating. |
-| items | list | `[]` | List of resources you're creating. |
 | kind | string | `""` | This defines the type of resource, such as "Pod", "Service", "Deployment", etc. |
-| metadata | object | `{"name":""}` | Metadata of the resource you're creating. |
-| spec | object | `{}` | Spec of the resource you're creating. |
+| metadata | object | `{"name":"example"}` | Metadata of the resource you're creating. |
+
+Other than that, absolutely anything you provide in your values file will get rendered into the final manifest. Only `apiVersion`, `kind` and `metadata` are enforced as required. Anything else is optional and will be rendered **as provided** into the resulting manifest.
 
 ## Overview
 
@@ -114,23 +114,49 @@ Multi-doc resources are **NOT** supported.
 
 ### Using with FluxCD
 
-To use this chart with `FluxCD`, create a `HelmRelease` resource in your Flux repository, and manage the dependency order using `dependsOn`. Here’s an example `HelmRelease` for the custom resources, depending on the operator `HelmRelease`:
+To use this chart with `FluxCD`, you first need to create a `HelmRepository` for this repo:
 
 ```yaml
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/helmrepository_v1.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: mirceanton-charts
+  namespace: flux-system
+spec:
+  type: oci
+  interval: 1h
+  timeout: 3m
+  url: oci://ghcr.io/mirceanton/helm-charts
+
+```
+
+Then, you can create a `HelmRelease` resource in your Flux repository, and manage the dependency order using `dependsOn`:
+
+```yaml
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: custom-resources
+  name: cert-manager-cluster-issuer
 spec:
+  interval: 15m
   chart:
     spec:
-      chart: mirceanton-oci
-      version: 1.0.0
+      chart: k8s-resource
+      version: 0.3.0
+      sourceRef:
+        kind: HelmRepository
+        name: mirceanton-charts
+        namespace: flux-system
+
   dependsOn:
-    - name: operator-helmrelease
+    - name: cert-manager
   valuesFrom:
-    - kind: Secret
-      name: cr-values
+    - kind: ConfigMap
+      name: cluster-issuer
 ```
 
 ----------------------------------------------

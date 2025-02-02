@@ -22,30 +22,4 @@ kind: ""
 # @schema
 # -- Metadata of the resource you're creating.
 metadata:
-  name: ""
-
-# @schema
-# required: false
-# type: object
-# additionalProperties: true
-# @schema
-# -- Spec of the resource you're creating.
-spec: {}
-
-# @schema
-# required: false
-# type: array
-# items:
-#   type: object
-#   properties:
-#     apiVersion:
-#       type: string
-#     kind:
-#       type: string
-#     metadata:
-#       type: object
-#     spec:
-#       type: object
-# @schema
-# -- List of resources you're creating.
-items: []
+  name: "example"
