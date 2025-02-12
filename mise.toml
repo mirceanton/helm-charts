@@ -1,0 +1,7 @@
+[tools]
+"aqua:dadav/helm-schema" = "latest"
+"aqua:helm/helm" = "latest"
+"aqua:kubernetes/kubectl" = "latest"
+"aqua:norwoodj/helm-docs" = "latest"
+"aqua:derailed/k9s" = "latest"
+"aqua:kubernetes/minikube" = "latest"
