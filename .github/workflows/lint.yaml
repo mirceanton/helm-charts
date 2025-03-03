@@ -24,8 +24,8 @@ jobs:
         run: helm lint .
 
   actionlint:
-    uses: mirceanton/reusable-workflows/.github/workflows/reusable-actionlint.yaml@6ed7b667628510c8fd2dedf74f2492c24652dccf # v3.8.0
+    uses: mirceanton/reusable-workflows/.github/workflows/reusable-actionlint.yaml@09f31ab6340ce5651dc6c28512a82de6b2415fb9 # v3.8.2
   commitlint:
-    uses: mirceanton/reusable-workflows/.github/workflows/reusable-commitlint.yaml@6ed7b667628510c8fd2dedf74f2492c24652dccf # v3.8.0
+    uses: mirceanton/reusable-workflows/.github/workflows/reusable-commitlint.yaml@09f31ab6340ce5651dc6c28512a82de6b2415fb9 # v3.8.2
   markdownlint:
-    uses: mirceanton/reusable-workflows/.github/workflows/reusable-markdownlint.yaml@6ed7b667628510c8fd2dedf74f2492c24652dccf # v3.8.0
+    uses: mirceanton/reusable-workflows/.github/workflows/reusable-markdownlint.yaml@09f31ab6340ce5651dc6c28512a82de6b2415fb9 # v3.8.2
