@@ -76,7 +76,7 @@ jobs:
         if: |
           (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
           ||
-          ( github.event_name == 'workflow_dispatch' && inputs.dry-run == 'false')
+          ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
         run: |
           git diff --exit-code ./charts/${{ matrix.chart }}/README.md || echo "changes=true" >> $GITHUB_OUTPUT
 
