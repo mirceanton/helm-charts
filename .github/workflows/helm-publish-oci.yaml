@@ -1,12 +1,13 @@
 ---
-name: Build and Push Helm Chart
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Helm Push
+permissions: { contents: read }
 
 on:
   workflow_dispatch: {}
   push:
     branches: [main]
-    paths:
-      - "charts/k8s-resource/**"
+    paths: [ "charts/k8s-resource/**" ]
 
 jobs:
   build-and-publish:
