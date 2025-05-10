@@ -1,0 +1,18 @@
+[tools]
+# Helm tools
+"aqua:helm/helm" = "latest"
+"aqua:norwoodj/helm-docs" = "latest"
+"aqua:dadav/helm-schema" = "latest"
+
+# Kube tools
+"aqua:kubernetes/minikube" = "latest"
+"aqua:derailed/k9s" = "latest"
+"aqua:kubernetes/kubectl" = "latest"
+
+# Linters
+"aqua:rhysd/actionlint" = "1.7.7"
+"npm:@commitlint/cli" = "19.8.1"
+
+# Renovate
+node = "22"
+"npm:renovate" = "40.11.2"
