@@ -6,13 +6,31 @@ permissions: { contents: read }
 on:
   workflow_dispatch: {}
   pull_request:
-    branches: [main]
-    paths:
-      - "charts/k8s-resource/**"
+    paths: [ "charts/**" ]
 
 jobs:
-  helm-lint:
+  discover-charts:
     runs-on: ubuntu-latest
+    outputs:
+      charts: ${{ steps.set-charts.outputs.charts }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Find Helm Charts
+        id: set-charts
+        run: |
+          CHARTS=$(find charts -type f -name "Chart.yaml" | xargs dirname | xargs -n1 basename | jq -R -s -c 'split("\n")[:-1]')
+          echo "charts=$CHARTS" >> $GITHUB_OUTPUT
+          echo "Found charts: $CHARTS"
+
+  helm-lint:
+    needs: discover-charts
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -21,4 +39,5 @@ jobs:
         uses: jdx/mise-action@7a111ead46986ccad89a74ad013ba2a7c08c9e67 # v2.2.1
 
       - name: Helm lint
+        working-directory: ./charts/${{ matrix.chart }}
         run: helm lint .
