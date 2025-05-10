@@ -30,7 +30,7 @@ jobs:
         id: set-charts
         run: |
           CHARTS=$(find charts -type f -name "Chart.yaml" | xargs dirname | xargs -n1 basename | jq -R -s -c 'split("\n")[:-1]')
-          echo "charts=$CHARTS" >> $GITHUB_OUTPUT
+          echo "charts=$CHARTS" >> "$GITHUB_OUTPUT"
           echo "Found charts: $CHARTS"
 
   generate-docs:
@@ -78,7 +78,7 @@ jobs:
           ||
           ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
         run: |
-          git diff --exit-code ./charts/${{ matrix.chart }}/README.md || echo "changes=true" >> $GITHUB_OUTPUT
+          git diff --exit-code ./charts/${{ matrix.chart }}/README.md || echo "changes=true" | tee "$GITHUB_OUTPUT"
 
       - name: Git config
         if: steps.git-check.outputs.changes == 'true'
