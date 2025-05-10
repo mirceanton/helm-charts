@@ -1,8 +1,8 @@
 [tools]
 # Helm tools
-"aqua:helm/helm" = "latest"
-"aqua:norwoodj/helm-docs" = "latest"
-"aqua:dadav/helm-schema" = "latest"
+"aqua:helm/helm" = "3.17.3"
+"aqua:norwoodj/helm-docs" = "1.14.2"
+"aqua:dadav/helm-schema" = "0.18.1"
 
 # Kube tools
 "aqua:kubernetes/minikube" = "latest"
