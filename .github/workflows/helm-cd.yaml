@@ -12,7 +12,10 @@ on:
         required: false
         type: boolean
   push:
-    paths: ["charts/**"]
+    paths:
+      - ".github/workflows/helm-cd.yaml"
+      - ".mise.toml"
+      - "charts/**"
 
 jobs:
   discover-charts:

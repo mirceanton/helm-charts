@@ -6,7 +6,10 @@ permissions: { contents: read }
 on:
   workflow_dispatch: {}
   push:
-    paths: [ "charts/**" ]
+    paths:
+      - ".github/workflows/helm-ci.yaml"
+      - ".mise.toml"
+      - "charts/**"
 
 jobs:
   discover-charts:
