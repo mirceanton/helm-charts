@@ -1,42 +1,70 @@
 ---
-name: Build and Push Helm Chart
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Helm Push
+permissions: { contents: read }
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Dry Run
+        default: false
+        required: false
+        type: boolean
   push:
-    branches: [main]
-    paths:
-      - "charts/k8s-resource/**"
+    paths: ["charts/**"]
 
 jobs:
-  build-and-publish:
+  discover-charts:
     runs-on: ubuntu-latest
+    outputs:
+      charts: ${{ steps.set-charts.outputs.charts }}
     steps:
-      - name: Generate Token
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
-        id: app-token
-        with:
-          app-id: "${{ secrets.BOT_APP_ID }}"
-          private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
-
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          token: "${{ steps.app-token.outputs.token }}"
 
-      - name: Set up Helm
-        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+      - name: Find Helm Charts
+        id: set-charts
+        run: |
+          CHARTS=$(find charts -type f -name "Chart.yaml" -print0 | xargs -0 dirname | xargs -0 -n1 basename | jq -R -s -c 'split("\n")[:-1]')
+          echo "charts=${CHARTS}" >> "$GITHUB_OUTPUT"
+          echo "Found charts: ${CHARTS}"
+
+  helm-push:
+    needs: discover-charts
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Get Changed Files
+        id: changed-files
+        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
         with:
-          version: v3.15.4
+          patterns: "./charts/${{ matrix.chart }}/Chart.yaml" # Trigger on version change in Chart.yaml
+
+      - name: Setup mise
+        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
+        uses: jdx/mise-action@7a111ead46986ccad89a74ad013ba2a7c08c9e67 # v2.2.1
+
+      - name: Package Helm chart
+        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
+        working-directory: ./charts/${{ matrix.chart }}
+        run: helm package .
 
       - name: Helm login to GHCR
+        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         run: |
           echo ${{ secrets.GHCR_RW_TOKEN }} | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
 
-      - name: Package Helm chart
-        working-directory: ./charts/k8s-resource
-        run: helm package .
-
       - name: Push Helm chart to GHCR
-        working-directory: ./charts/k8s-resource
+        if: |
+          (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
+          ||
+          ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
+        working-directory: ./charts/${{ matrix.chart }}
         run: helm push "$(ls ./*.tgz)" oci://ghcr.io/${{ github.repository }}
