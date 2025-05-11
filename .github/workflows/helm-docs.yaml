@@ -1,16 +1,9 @@
----
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Helm Docs
-permissions: { contents: write }
+permissions: { contents: read }
 
 on:
-  workflow_dispatch:
-    inputs:
-      dry-run:
-        description: Dry Run
-        default: true
-        required: false
-        type: boolean
+  workflow_dispatch: {}
   push:
     paths:
       - "charts/**/Chart.yaml"
@@ -33,25 +26,16 @@ jobs:
           echo "charts=${CHARTS}" >> "$GITHUB_OUTPUT"
           echo "Found charts: ${CHARTS}"
 
-  generate-docs:
-    needs: [discover-charts]
+  verify-docs:
+    needs: discover-charts
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
-      - name: Generate Token
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
-        id: app-token
-        with:
-          app-id: "${{ secrets.BOT_APP_ID }}"
-          private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
-
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          token: "${{ steps.app-token.outputs.token }}"
 
       - name: Get Changed Files
         id: changed-files
@@ -66,35 +50,16 @@ jobs:
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         uses: jdx/mise-action@7a111ead46986ccad89a74ad013ba2a7c08c9e67 # v2.2.1
 
-      - name: Generate helm docs
+      - name: Generate and verify helm docs
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         working-directory: ./charts/${{ matrix.chart }}
-        run: mise exec -- helm-docs
-
-      - name: Commit and push changes
-        if: |
-          (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
-          ||
-          ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
-        env:
-          CI_AUTHOR_NAME: "mr-borboto[bot]"
-          CI_AUTHOR_EMAIL: "170036086+mr-borboto[bot]@users.noreply.github.com"
-          CI_COMMIT_MESSAGE: "docs(chart/${{ matrix.chart }}): update README.md"
         run: |
-          git config --global user.name '${{ env.CI_AUTHOR_NAME }}'
-          git config --global user.email '${{ env.CI_AUTHOR_EMAIL }}'
-          git add ./charts/${{ matrix.chart }}/README.md
-          git commit -m "${{ env.CI_COMMIT_MESSAGE }}" && git push || echo "No changes to commit"
+          # Generate docs to a temporary file
+          mise exec -- helm-docs -o /tmp/README.md
 
-  update-summary:
-    needs: generate-docs
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Set Job Status
-        run: |
-          if [[ "${{ needs.generate-docs.result }}" == "success" ]]; then
-            echo "Helm documentation successfully updated!"
-          else
-            echo "::warning::Some charts failed to update documentation. Check job logs for details."
+          # Compare with the existing README.md
+          if ! diff -q /tmp/README.md README.md &>/dev/null; then
+            echo "::error::The README.md for chart ${{ matrix.chart }} is out of date. Please run 'helm-docs' locally and commit the changes."
+            diff -u README.md /tmp/README.md || true
+            exit 1
           fi
