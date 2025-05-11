@@ -31,68 +31,38 @@ jobs:
           echo "charts=${CHARTS}" >> "$GITHUB_OUTPUT"
           echo "Found charts: ${CHARTS}"
 
-  generate-schema:
-    needs: [discover-charts]
+  verify-schema:
+    needs: discover-charts
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
-      - name: Generate Token
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
-        id: app-token
-        with:
-          app-id: "${{ secrets.BOT_APP_ID }}"
-          private-key: "${{ secrets.BOT_APP_PRIVATE_KEY }}"
-
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          token: "${{ steps.app-token.outputs.token }}"
 
       - name: Get Changed Files
         id: changed-files
         uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
         with:
           patterns: |
-            ./charts/${{ matrix.chart }}/Chart.yaml
             ./charts/${{ matrix.chart }}/values.yaml
-            ./charts/${{ matrix.chart }}/README.md.gotmpl
 
       - name: Setup mise
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         uses: jdx/mise-action@7a111ead46986ccad89a74ad013ba2a7c08c9e67 # v2.2.1
 
-      - name: Generate helm schema
+      - name: Generate and verify helm schema
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         working-directory: ./charts/${{ matrix.chart }}
-        run: mise exec -- helm-schema
-
-      - name: Commit and push changes
-        if: |
-          (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
-          ||
-          ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
-        env:
-          CI_AUTHOR_NAME: "mr-borboto[bot]"
-          CI_AUTHOR_EMAIL: "170036086+mr-borboto[bot]@users.noreply.github.com"
-          CI_COMMIT_MESSAGE: "chore(chart/${{ matrix.chart }}): update values schema"
         run: |
-          git config --global user.name '${{ env.CI_AUTHOR_NAME }}'
-          git config --global user.email '${{ env.CI_AUTHOR_EMAIL }}'
-          git add ./charts/${{ matrix.chart }}/values.schema.json
-          git commit -m "${{ env.CI_COMMIT_MESSAGE }}" && git push || echo "No changes to commit"
-
-  update-summary:
-    needs: generate-schema
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Set Job Status
-        run: |
-          if [[ "${{ needs.generate-schema.result }}" == "success" ]]; then
-            echo "Helm schemas successfully updated!"
-          else
-            echo "::warning::Some charts failed to update schemas. Check job logs for details."
+          # Generate schema to a temporary file
+          mise exec -- helm-schema -o /tmp/values.schema.json
+          
+          # Compare with the existing schema
+          if ! diff -q /tmp/values.schema.json values.schema.json &>/dev/null; then
+            echo "::error::The values.schema.json for chart ${{ matrix.chart }} is out of date. Please run 'helm-schema' locally and commit the changes."
+            diff -u values.schema.json /tmp/values.schema.json || true
+            exit 1
           fi
