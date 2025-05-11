@@ -1,30 +1,58 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"additionalProperties": true,
-	"type": "object",
-	"properties": {
-		"apiVersion": {
-			"type": "string",
-			"description": "The API version of the Kubernetes resource you're creating.",
-			"examples": ["v1", "apps/v1", "batch/v1"]
-		},
-		"kind": {
-			"type": "string",
-			"description": "This defines the type of resource, such as 'Pod', 'Service', 'Deployment', etc.",
-			"examples": ["Pod", "Service", "Deployment"]
-		},
-		"metadata": {
-			"type": "object",
-			"description": "Metadata of the resource you're creating.",
-			"properties": {
-				"name": {
-					"type": "string",
-					"description": "The name of the resource."
-				}
-			},
-			"required": ["name"],
-			"additionalProperties": true
-		}
-	},
-	"required": ["apiVersion", "kind", "metadata"]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "default": "",
+      "description": "The API version of the Kubernetes resource you're creating.",
+      "examples": [
+        "v1",
+        "apps/v1",
+        "batch/v1"
+      ],
+      "required": [],
+      "title": "apiVersion",
+      "type": "string"
+    },
+    "global": {
+      "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
+      "required": [],
+      "title": "global",
+      "type": "object"
+    },
+    "kind": {
+      "default": "",
+      "description": "This defines the type of resource, such as \"Pod\", \"Service\", \"Deployment\", etc.",
+      "examples": [
+        "Pod",
+        "Service",
+        "Deployment"
+      ],
+      "required": [],
+      "title": "kind",
+      "type": "string"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Metadata of the resource you're creating.",
+      "properties": {
+        "name": {
+          "default": "example",
+          "required": [],
+          "title": "name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind"
+  ],
+  "type": "object"
 }
