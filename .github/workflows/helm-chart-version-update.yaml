@@ -1,0 +1,58 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Helm Chart Version Update
+permissions: { contents: read }
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths: [ "charts/**" ]
+
+jobs:
+  discover-charts:
+    runs-on: ubuntu-latest
+    outputs:
+      charts: ${{ steps.set-charts.outputs.charts }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Find Helm Charts
+        id: set-charts
+        run: |
+          CHARTS=$(find charts -type f -name "Chart.yaml" -print0 | xargs -0 dirname | xargs -0 -n1 basename | jq -R -s -c 'split("\n")[:-1]')
+          echo "charts=${CHARTS}" >> "$GITHUB_OUTPUT"
+          echo "Found charts: ${CHARTS}"
+
+  chart-version-update:
+    needs: discover-charts
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check if values or templates changed
+        id: templates-changed
+        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        with:
+          patterns: ./charts/${{ matrix.chart }}/templates/**
+
+      - name: Check if values changed
+        id: values-changed
+        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        with:
+          patterns: ./charts/${{ matrix.chart }}/values.yaml
+
+      - name: Check if chart.yaml has been updated
+        id: chart-changed
+        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        with:
+          patterns: ./charts/${{ matrix.chart }}/Chart.yaml
+      
+      - name: Fail if chart.yaml has not been updated
+        if: steps.values-changed.outputs.changed_files != '[]' && steps.templates-changed.outputs.changed_files != '[]' && steps.chart-changed.outputs.changed_files == '[]'
+        run: exit 1

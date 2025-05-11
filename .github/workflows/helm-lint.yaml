@@ -1,18 +1,12 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Helm Push
+name: Helm Lint
 permissions: { contents: read }
 
 on:
-  workflow_dispatch:
-    inputs:
-      dry-run:
-        description: Dry Run
-        default: false
-        required: false
-        type: boolean
+  workflow_dispatch: {}
   push:
-    paths: ["charts/**"]
+    paths: [ "charts/**" ]
 
 jobs:
   discover-charts:
@@ -30,7 +24,7 @@ jobs:
           echo "charts=${CHARTS}" >> "$GITHUB_OUTPUT"
           echo "Found charts: ${CHARTS}"
 
-  helm-push:
+  helm-lint:
     needs: discover-charts
     runs-on: ubuntu-latest
     strategy:
@@ -45,26 +39,13 @@ jobs:
         id: changed-files
         uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
         with:
-          patterns: "./charts/${{ matrix.chart }}/Chart.yaml" # Trigger on version change in Chart.yaml
+          patterns: "./charts/${{ matrix.chart }}/**/*"
 
       - name: Setup mise
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         uses: jdx/mise-action@7a111ead46986ccad89a74ad013ba2a7c08c9e67 # v2.2.1
 
-      - name: Package Helm chart
+      - name: Helm lint
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         working-directory: ./charts/${{ matrix.chart }}
-        run: helm package .
-
-      - name: Helm login to GHCR
-        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
-        run: |
-          echo ${{ secrets.GHCR_RW_TOKEN }} | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
-
-      - name: Push Helm chart to GHCR
-        if: |
-          (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
-          ||
-          ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
-        working-directory: ./charts/${{ matrix.chart }}
-        run: helm push "$(ls ./*.tgz)" oci://ghcr.io/${{ github.repository }}
+        run: helm lint .
