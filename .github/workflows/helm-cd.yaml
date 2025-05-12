@@ -21,34 +21,32 @@ jobs:
   discover-charts:
     runs-on: ubuntu-latest
     outputs:
-      charts: ${{ steps.set-charts.outputs.charts }}
+      charts: ${{ steps.discover.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Find Helm Charts
-        id: set-charts
-        run: |
-          CHARTS=$(find charts -type f -name "Chart.yaml" -print0 | xargs -0 dirname | xargs -0 -n1 basename | jq -R -s -c 'split("\n")[:-1]')
-          echo "charts=${CHARTS}" >> "$GITHUB_OUTPUT"
-          echo "Found charts: ${CHARTS}"
+        id: discover
+        uses: mirceanton/action-folder-matrix@v1.0.0
+        with:
+          path: ./charts
 
   helm-push:
     needs: discover-charts
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
+      matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Get Changed Files
         id: changed-files
-        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        uses: bjw-s-labs/action-changed-files@v0.3.3
         with:
-          patterns: "./charts/${{ matrix.chart }}/Chart.yaml" # Trigger on version change in Chart.yaml
+          patterns: "./charts/${{ matrix.directory }}/Chart.yaml" # Trigger on version change in Chart.yaml
 
       - name: Setup mise
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
@@ -56,7 +54,7 @@ jobs:
 
       - name: Package Helm chart
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
-        working-directory: ./charts/${{ matrix.chart }}
+        working-directory: ./charts/${{ matrix.directory }}
         run: helm package .
 
       - name: Helm login to GHCR
@@ -69,5 +67,5 @@ jobs:
           (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
           ||
           ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
-        working-directory: ./charts/${{ matrix.chart }}
+        working-directory: ./charts/${{ matrix.directory }}
         run: helm push "$(ls ./*.tgz)" oci://ghcr.io/${{ github.repository }}
