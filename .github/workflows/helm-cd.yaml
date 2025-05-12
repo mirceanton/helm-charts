@@ -28,7 +28,7 @@ jobs:
 
       - name: Find Helm Charts
         id: discover
-        uses: mirceanton/action-folder-matrix@v1.0.0
+        uses: mirceanton/action-folder-matrix@41d0f52897d4179e1d783da57a4b9783b761ca5c # v1.0.0
         with:
           path: ./charts
 
@@ -44,7 +44,7 @@ jobs:
 
       - name: Get Changed Files
         id: changed-files
-        uses: bjw-s-labs/action-changed-files@v0.3.3
+        uses: bjw-s-labs/action-changed-files@930cef8463348e168cab7235c47fe95a7a235f65 # v0.3.3
         with:
           patterns: "./charts/${{ matrix.directory }}/Chart.yaml" # Trigger on version change in Chart.yaml
 
