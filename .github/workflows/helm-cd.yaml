@@ -44,7 +44,7 @@ jobs:
 
       - name: Get Changed Files
         id: changed-files
-        uses: bjw-s-labs/action-changed-files@930cef8463348e168cab7235c47fe95a7a235f65
+        uses: bjw-s-labs/action-changed-files@v0.3.3
         with:
           patterns: "./charts/${{ matrix.directory }}/Chart.yaml" # Trigger on version change in Chart.yaml
 
