@@ -37,8 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        chart: ${{ fromJson(needs.discover-charts.outputs.charts).directory }}
+      matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -47,7 +46,7 @@ jobs:
         id: changed-files
         uses: bjw-s-labs/action-changed-files@3628c3c17e0cc052b071d9a6fb5177335c7e8088
         with:
-          patterns: "./charts/${{ matrix.chart }}/Chart.yaml" # Trigger on version change in Chart.yaml
+          patterns: "./charts/${{ matrix.directory }}/Chart.yaml" # Trigger on version change in Chart.yaml
 
       - name: Setup mise
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
@@ -55,7 +54,7 @@ jobs:
 
       - name: Package Helm chart
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
-        working-directory: ./charts/${{ matrix.chart }}
+        working-directory: ./charts/${{ matrix.directory }}
         run: helm package .
 
       - name: Helm login to GHCR
@@ -68,5 +67,5 @@ jobs:
           (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
           ||
           ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
-        working-directory: ./charts/${{ matrix.chart }}
+        working-directory: ./charts/${{ matrix.directory }}
         run: helm push "$(ls ./*.tgz)" oci://ghcr.io/${{ github.repository }}
