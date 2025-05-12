@@ -40,7 +40,7 @@ jobs:
 
       - name: Get Changed Files
         id: changed-files
-        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        uses: bjw-s-labs/action-changed-files@3628c3c17e0cc052b071d9a6fb5177335c7e8088
         with:
           patterns: "./charts/${{ matrix.chart }}/**/*"
 
@@ -66,19 +66,19 @@ jobs:
 
       - name: Check if values or templates changed
         id: templates-changed
-        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        uses: bjw-s-labs/action-changed-files@3628c3c17e0cc052b071d9a6fb5177335c7e8088
         with:
           patterns: ./charts/${{ matrix.chart }}/templates/**
 
       - name: Check if values changed
         id: values-changed
-        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        uses: bjw-s-labs/action-changed-files@3628c3c17e0cc052b071d9a6fb5177335c7e8088
         with:
           patterns: ./charts/${{ matrix.chart }}/values.yaml
 
       - name: Check if chart.yaml has been updated
         id: chart-changed
-        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        uses: bjw-s-labs/action-changed-files@3628c3c17e0cc052b071d9a6fb5177335c7e8088
         with:
           patterns: ./charts/${{ matrix.chart }}/Chart.yaml
       
@@ -99,7 +99,7 @@ jobs:
 
       - name: Get Changed Files
         id: changed-files
-        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        uses: bjw-s-labs/action-changed-files@3628c3c17e0cc052b071d9a6fb5177335c7e8088
         with:
           patterns: |
             ./charts/${{ matrix.chart }}/Chart.yaml
@@ -137,7 +137,7 @@ jobs:
 
       - name: Get Changed Files
         id: changed-files
-        uses: bjw-s-labs/action-changed-files@b1144fc772fca235a50902c7bb6cc431cc7d8e27 # v0.3.2
+        uses: bjw-s-labs/action-changed-files@3628c3c17e0cc052b071d9a6fb5177335c7e8088
         with:
           patterns: |
             ./charts/${{ matrix.chart }}/values.yaml
