@@ -21,17 +21,16 @@ jobs:
   discover-charts:
     runs-on: ubuntu-latest
     outputs:
-      charts: ${{ steps.set-charts.outputs.charts }}
+      charts: ${{ steps.discover.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Find Helm Charts
-        id: set-charts
-        run: |
-          CHARTS=$(find charts -type f -name "Chart.yaml" -print0 | xargs -0 dirname | xargs -0 -n1 basename | jq -R -s -c 'split("\n")[:-1]')
-          echo "charts=${CHARTS}" >> "$GITHUB_OUTPUT"
-          echo "Found charts: ${CHARTS}"
+        id: discover
+        uses: mirceanton/action-folder-matrix@feat/initial-implementation
+        with:
+          path: ./charts
 
   helm-push:
     needs: discover-charts
@@ -39,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        chart: ${{ fromJson(needs.discover-charts.outputs.charts) }}
+        chart: ${{ fromJson(needs.discover-charts.outputs.charts).directory }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
