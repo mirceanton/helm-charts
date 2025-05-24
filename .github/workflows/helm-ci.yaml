@@ -25,7 +25,7 @@ jobs:
         uses: mirceanton/action-folder-matrix@feat/metadata
         with:
           path: ./charts
-          metadata-file: Chart.yaml
+          metadata_file: Chart.yaml
 
   helm-lint:
     needs: discover-charts
