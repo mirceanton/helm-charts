@@ -22,7 +22,7 @@ jobs:
 
       - name: Find Helm Charts
         id: discover
-        uses: mirceanton/action-folder-matrix@main
+        uses: mirceanton/action-folder-matrix@feat/metadata
         with:
           path: ./charts
           metadata-file: Chart.yaml
