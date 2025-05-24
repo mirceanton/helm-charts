@@ -22,9 +22,10 @@ jobs:
 
       - name: Find Helm Charts
         id: discover
-        uses: mirceanton/action-folder-matrix@41d0f52897d4179e1d783da57a4b9783b761ca5c # v1.0.0
+        uses: mirceanton/action-folder-matrix@main
         with:
           path: ./charts
+          metadata-file: Chart.yaml
 
   helm-lint:
     needs: discover-charts
@@ -42,7 +43,7 @@ jobs:
         with:
           patterns: "./charts/${{ matrix.directory }}/**/*"
 
-      - name: Setup mis
+      - name: Setup mise
         if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         uses: jdx/mise-action@c94f0bf9e520b150e34c017db785461f7e71c5fb # v2.2.2
 
