@@ -35,6 +35,7 @@ jobs:
   helm-push:
     needs: discover-charts
     runs-on: ubuntu-latest
+    if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}

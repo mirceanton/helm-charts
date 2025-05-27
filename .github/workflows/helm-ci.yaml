@@ -29,6 +29,7 @@ jobs:
   helm-lint:
     needs: discover-charts
     runs-on: ubuntu-latest
+    if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
@@ -54,6 +55,7 @@ jobs:
   verify-chart-version:
     needs: discover-charts
     runs-on: ubuntu-latest
+    if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
@@ -86,6 +88,7 @@ jobs:
   verify-docs:
     needs: discover-charts
     runs-on: ubuntu-latest
+    if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
@@ -123,6 +126,7 @@ jobs:
   verify-schema:
     needs: discover-charts
     runs-on: ubuntu-latest
+    if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
