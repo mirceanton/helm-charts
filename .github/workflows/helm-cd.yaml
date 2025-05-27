@@ -11,6 +11,11 @@ on:
         default: false
         required: false
         type: boolean
+      select:
+        description: "Select chart to run on"
+        required: false
+        default: ""
+        type: string
   push:
     paths:
       - ".github/workflows/helm-cd.yaml"
@@ -31,6 +36,10 @@ jobs:
         uses: mirceanton/action-folder-matrix@da40b4ba972833ee6765ba491dbdc6c5c0848c77 # v2.0.0
         with:
           path: ./charts
+          metadata-file: Chart.yaml
+          changed-only: ${{ github.event_name != 'workflow_dispatch' }}
+          filter: ${{ inputs.select }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   helm-push:
     needs: discover-charts
