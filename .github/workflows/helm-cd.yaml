@@ -28,7 +28,7 @@ jobs:
 
       - name: Find Helm Charts
         id: discover
-        uses: mirceanton/action-folder-matrix@41d0f52897d4179e1d783da57a4b9783b761ca5c # v1.0.0
+        uses: mirceanton/action-folder-matrix@b8bc4dede4e4afa816cb708621627c09f182f6ab # v1.1.0
         with:
           path: ./charts
 
