@@ -129,7 +129,6 @@ jobs:
         uses: jdx/mise-action@c94f0bf9e520b150e34c017db785461f7e71c5fb # v2.2.2
 
       - name: Generate and verify helm schema
-        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         working-directory: ./charts/${{ matrix.directory }}
         run: |
           # Generate schema to a temporary file
