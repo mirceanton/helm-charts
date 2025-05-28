@@ -11,6 +11,11 @@ on:
         default: false
         required: false
         type: boolean
+      select:
+        description: "Select chart to run on"
+        required: false
+        default: ""
+        type: string
   push:
     paths:
       - ".github/workflows/helm-cd.yaml"
@@ -31,6 +36,10 @@ jobs:
         uses: mirceanton/action-folder-matrix@da40b4ba972833ee6765ba491dbdc6c5c0848c77 # v2.0.0
         with:
           path: ./charts
+          metadata-file: Chart.yaml
+          changed-only: ${{ github.event_name != 'workflow_dispatch' }}
+          filter: ${{ inputs.select }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   helm-push:
     needs: discover-charts
@@ -43,30 +52,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Get Changed Files
-        id: changed-files
-        uses: bjw-s-labs/action-changed-files@930cef8463348e168cab7235c47fe95a7a235f65 # v0.3.3
-        with:
-          patterns: "./charts/${{ matrix.directory }}/Chart.yaml" # Trigger on version change in Chart.yaml
-
       - name: Setup mise
-        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         uses: jdx/mise-action@c94f0bf9e520b150e34c017db785461f7e71c5fb # v2.2.2
 
       - name: Package Helm chart
-        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         working-directory: ./charts/${{ matrix.directory }}
         run: helm package .
 
       - name: Helm login to GHCR
-        if: steps.changed-files.outputs.changed_files != '[]' || github.event_name == 'workflow_dispatch'
         run: |
           echo ${{ secrets.GHCR_RW_TOKEN }} | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
 
       - name: Push Helm chart to GHCR
-        if: |
-          (steps.changed-files.outputs.changed_files != '[]' && github.ref_name == 'main')
-          ||
-          ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
+        if: (github.ref_name == 'main') || ( github.event_name == 'workflow_dispatch' && inputs.dry-run == false)
         working-directory: ./charts/${{ matrix.directory }}
         run: helm push "$(ls ./*.tgz)" oci://ghcr.io/${{ github.repository }}
