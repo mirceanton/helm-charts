@@ -1,18 +1,21 @@
 [tools]
-# Helm tools
-"aqua:helm/helm" = "3.18.0"
-"aqua:norwoodj/helm-docs" = "1.14.2"
-"aqua:dadav/helm-schema" = "0.18.1"
+# =================================================================================================
+# Project Tools
+# =================================================================================================
+"aqua:helm/helm" = "3.18"
+"aqua:norwoodj/helm-docs" = "1.14"
+"aqua:dadav/helm-schema" = "0.18"
 
-# Kube tools
+# =================================================================================================
+# Misc Tools
+# =================================================================================================
+"aqua:kubernetes/kubectl" = "latest"
 "aqua:kubernetes/minikube" = "latest"
 "aqua:derailed/k9s" = "latest"
-"aqua:kubernetes/kubectl" = "latest"
 
-# Linters
-"aqua:rhysd/actionlint" = "1.7.7"
-"npm:@commitlint/cli" = "19.8.1"
-
-# Renovate
-node = "22"
-"npm:renovate" = "40.25.0"
+# =================================================================================================
+# CI Tools
+# =================================================================================================
+"npm:renovate" = "40"
+"aqua:rhysd/actionlint" = "1"
+"npm:@commitlint/cli" = "19"
