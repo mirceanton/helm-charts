@@ -1,9 +1,10 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Helm CI
+name: Lint
 permissions: { contents: read }
 
 on:
+  push: {}
   workflow_dispatch:
     inputs:
       select:
@@ -11,13 +12,15 @@ on:
         required: false
         default: ""
         type: string
-  push:
-    paths:
-      - ".github/workflows/helm-ci.yaml"
-      - ".mise.toml"
-      - "charts/**"
 
 jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: jdx/mise-action@c53b9236f0b3370f31520f8b142f141256d839c6 # v3.6.0
+      - run: mise exec -- actionlint
+
   discover-charts:
     runs-on: ubuntu-latest
     outputs:
@@ -44,15 +47,9 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Setup mis
-        uses: jdx/mise-action@c53b9236f0b3370f31520f8b142f141256d839c6 # v3.6.0
-
-      - name: Helm lint
-        working-directory: ./charts/${{ matrix.directory }}
-        run: helm lint .
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: jdx/mise-action@c53b9236f0b3370f31520f8b142f141256d839c6 # v3.6.0
+      - run: helm lint ./charts/${{ matrix.directory }}
 
   verify-chart-version:
     needs: discover-charts

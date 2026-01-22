@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Helm CD
+name: Release
 permissions: { contents: read }
 
 on:
@@ -17,10 +17,7 @@ on:
         default: ""
         type: string
   push:
-    paths:
-      - ".github/workflows/helm-cd.yaml"
-      - ".mise.toml"
-      - "charts/**"
+    paths: ["charts/**"]
 
 jobs:
   discover-charts:
