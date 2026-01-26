@@ -3,5 +3,5 @@ apiVersion: v2
 name: k8s-resource
 description: A Helm chart that templates out whatever k8s resource you want.
 type: application
-version: 0.3.0
+version: 0.4.0
 appVersion: "N/A"

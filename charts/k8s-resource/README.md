@@ -1,6 +1,6 @@
 # k8s-resource
 
-![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: N/A](https://img.shields.io/badge/AppVersion-N/A-informational?style=flat-square)
+![Version: 0.4.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: N/A](https://img.shields.io/badge/AppVersion-N/A-informational?style=flat-square)
 
 A Helm chart that templates out whatever k8s resource you want.
 
@@ -12,7 +12,7 @@ A Helm chart that templates out whatever k8s resource you want.
 | kind | string | `""` | This defines the type of resource, such as "Pod", "Service", "Deployment", etc. |
 | metadata | object | `{"name":"example"}` | Metadata of the resource you're creating. |
 
-Other than that, absolutely anything you provide in your values file will get rendered into the final manifest. Only `apiVersion`, `kind` and `metadata` are enforced as required. Anything else is optional and will be rendered **as provided** into the resulting manifest.
+Other than that, almost anything you provide in your values file will get rendered into the final manifest. Only `apiVersion`, `kind` and `metadata` are enforced as required. Anything else is optional and will be rendered **as provided** into the resulting manifest. The only exception is `global`, which will be removed from the final rendered manifest.
 
 ## Overview
 

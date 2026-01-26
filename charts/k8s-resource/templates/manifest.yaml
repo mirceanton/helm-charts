@@ -1,2 +1,2 @@
 ---
-{{ .Values | toYaml }}
+{{ omit .Values "global" | toYaml }}
