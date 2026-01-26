@@ -105,14 +105,16 @@ jobs:
         working-directory: ./charts/${{ matrix.directory }}
         run: |
           # Generate docs to a temporary file
-          mise exec -- helm-docs -o /tmp/README.md
+          mise exec -- helm-docs -o .README.md.tmp
 
           # Compare with the existing README.md
-          if ! diff -q /tmp/README.md README.md &>/dev/null; then
+          if ! diff -q .README.md.tmp README.md &>/dev/null; then
             echo "::error::The README.md for chart ${{ matrix.directory }} is out of date. Please run 'helm-docs' locally and commit the changes."
-            diff -u README.md /tmp/README.md || true
+            diff -u README.md .README.md.tmp || true
+            rm -f .README.md.tmp
             exit 1
           fi
+          rm -f .README.md.tmp
 
   verify-schema:
     needs: discover-charts
@@ -132,11 +134,13 @@ jobs:
         working-directory: ./charts/${{ matrix.directory }}
         run: |
           # Generate schema to a temporary file
-          mise exec -- helm-schema -o /tmp/values.schema.json
+          mise exec -- helm-schema -o .values.schema.json.tmp
           
           # Compare with the existing schema
-          if ! diff -q /tmp/values.schema.json values.schema.json &>/dev/null; then
+          if ! diff -q .values.schema.json.tmp values.schema.json &>/dev/null; then
             echo "::error::The values.schema.json for chart ${{ matrix.directory }} is out of date. Please run 'helm-schema' locally and commit the changes."
-            diff -u values.schema.json /tmp/values.schema.json || true
+            diff -u values.schema.json .values.schema.json.tmp || true
+            rm -f .values.schema.json.tmp
             exit 1
           fi
+          rm -f .values.schema.json.tmp
