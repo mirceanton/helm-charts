@@ -10,7 +10,6 @@
         "apps/v1",
         "batch/v1"
       ],
-      "required": [],
       "title": "apiVersion",
       "type": "string"
     },
@@ -28,7 +27,6 @@
         "Service",
         "Deployment"
       ],
-      "required": [],
       "title": "kind",
       "type": "string"
     },
@@ -38,7 +36,6 @@
       "properties": {
         "name": {
           "default": "example",
-          "required": [],
           "title": "name",
           "type": "string"
         }
