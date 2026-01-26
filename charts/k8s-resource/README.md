@@ -12,7 +12,7 @@ A Helm chart that templates out whatever k8s resource you want.
 | kind | string | `""` | This defines the type of resource, such as "Pod", "Service", "Deployment", etc. |
 | metadata | object | `{"name":"example"}` | Metadata of the resource you're creating. |
 
-Other than that, absolutely anything you provide in your values file will get rendered into the final manifest. Only `apiVersion`, `kind` and `metadata` are enforced as required. Anything else is optional and will be rendered **as provided** into the resulting manifest.
+Other than that, almost anything you provide in your values file will get rendered into the final manifest. Only `apiVersion`, `kind` and `metadata` are enforced as required. Anything else is optional and will be rendered **as provided** into the resulting manifest. The only exception is `global`, which will be removed from the final rendered manifest.
 
 ## Overview
 
