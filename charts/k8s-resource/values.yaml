@@ -1,4 +1,7 @@
 ---
+# @schema.root
+# additionalProperties: true
+# @schema.root
 # @schema
 # required: true
 # type: string
