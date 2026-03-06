@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: jdx/mise-action@e79ddf65a11cec7b0e882bedced08d6e976efb2d # v3.6.2
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
       - run: mise exec -- actionlint
 
   discover-charts:
@@ -51,7 +51,7 @@ jobs:
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: jdx/mise-action@e79ddf65a11cec7b0e882bedced08d6e976efb2d # v3.6.2
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
       - run: helm lint ./charts/${{ matrix.directory }}
 
   verify-chart-version:
@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup mise
-        uses: jdx/mise-action@e79ddf65a11cec7b0e882bedced08d6e976efb2d # v3.6.2
+        uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
 
       - name: Generate and verify helm docs
         working-directory: ./charts/${{ matrix.directory }}
@@ -128,7 +128,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup mise
-        uses: jdx/mise-action@e79ddf65a11cec7b0e882bedced08d6e976efb2d # v3.6.2
+        uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
 
       - name: Generate and verify helm schema
         working-directory: ./charts/${{ matrix.directory }}
