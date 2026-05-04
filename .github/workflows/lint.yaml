@@ -18,10 +18,10 @@ on:
 
 jobs:
   actionlint:
-    runs-on: ubuntu-latest
+    runs-on: infra-runners
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+      - run: mise install
       - run: mise exec -- actionlint
 
   discover-charts:
@@ -44,14 +44,14 @@ jobs:
 
   helm-lint:
     needs: discover-charts
-    runs-on: ubuntu-latest
+    runs-on: infra-runners
     if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.discover-charts.outputs.charts) }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+      - run: mise install
       - run: helm lint ./charts/${{ matrix.directory }}
 
   verify-chart-version:
@@ -89,7 +89,7 @@ jobs:
 
   verify-docs:
     needs: discover-charts
-    runs-on: ubuntu-latest
+    runs-on: infra-runners
     if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
@@ -99,7 +99,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        run: mise install
 
       - name: Generate and verify helm docs
         working-directory: ./charts/${{ matrix.directory }}
@@ -118,7 +118,7 @@ jobs:
 
   verify-schema:
     needs: discover-charts
-    runs-on: ubuntu-latest
+    runs-on: infra-runners
     if: fromJson(needs.discover-charts.outputs.charts).include[0] != null
     strategy:
       fail-fast: false
@@ -128,7 +128,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        run: mise install
 
       - name: Generate and verify helm schema
         working-directory: ./charts/${{ matrix.directory }}
