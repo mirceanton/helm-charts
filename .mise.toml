@@ -17,3 +17,7 @@
 # CI Tools
 # =================================================================================================
 "aqua:rhysd/actionlint" = "latest"
+
+[settings]
+# Hold back freshly published tool releases (supply-chain protection).
+minimum_release_age = "3d"
