@@ -1,0 +1,66 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.versionBadge" . }}
+
+{{ template "chart.description" . }}
+
+## Overview
+
+For one app, this chart renders:
+
+- a `PersistentVolumeClaim` that, on first creation, is restored from the latest backup (`dataSourceRef` → `ReplicationDestination`)
+- a `ReplicationSource` that backs the PVC up to a restic repository
+- a `ReplicationDestination` used for that restore
+- optionally, an `ExternalSecret` that builds the restic repository credentials
+
+It assumes [VolSync](https://volsync.readthedocs.io/) is installed, and [External Secrets](https://external-secrets.io/) too when `externalSecret.enabled` is set.
+
+### Staggered schedules
+
+If every app shares the same cron expression, all backups start at the same moment and spike CPU and I/O. Instead of a fixed cron, set `backup.every` (for example `6h`). The chart then hashes `namespace/release`, or `backup.seed` if set, into a minute and hour offset:
+
+| release           | `every: 12h`    | `every: 4h`                |
+|-------------------|-----------------|----------------------------|
+| `ai/hermes`       | `30 8,20 * * *` | `30 0,4,8,12,16,20 * * *`  |
+| `media/immich`    | `23 7,19 * * *` | `23 3,7,11,15,19,23 * * *` |
+| `media/paperless` | `54 2,14 * * *` | `54 2,6,10,14,18,22 * * *` |
+
+The result is deterministic: the same release always renders the same schedule, so there is no drift between reconciles. To pin an exact time, set `backup.schedule`, which takes precedence.
+
+### Final backup on uninstall
+
+With `backup.finalBackup.enabled` (the default), a `pre-delete` hook Job runs on uninstall. It switches the `ReplicationSource` to a one-off manual trigger and waits until VolSync reports it in `status.lastManualSync`. Only then does Helm delete the PVC and the rest. If the backup fails or exceeds `backup.finalBackup.timeoutSeconds`, the uninstall fails and nothing is deleted.
+
+When using Flux, keep `spec.uninstall.timeout` above the backup timeout, and don't set `spec.uninstall.disableHooks`. Deleting the whole namespace at once can race the hook, so remove the `HelmRelease` first.
+
+## Using with FluxCD
+
+```yaml
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: paperless-volsync
+spec:
+  interval: 1h
+  releaseName: paperless
+  chart:
+    kind: OCIRepository
+    spec:
+      url: oci://ghcr.io/mirceanton/helm-charts/volsync
+      ref:
+        tag: 0.1.0
+  uninstall:
+    timeout: 70m
+  values:
+    pvc:
+      capacity: 20Gi
+    backup:
+      every: 6h
+```
+
+The inline `chart.kind: OCIRepository` form needs Flux v2.10 or newer. On older versions, use `chartRef` pointing to a separate `OCIRepository`.
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "helm-docs.versionFooter" . }}

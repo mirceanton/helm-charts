@@ -1,0 +1,100 @@
+{{- $name := include "volsync.name" . }}
+{{- $b := .Values.backup }}
+{{- if .Values.pvc.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ default $name .Values.pvc.name }}
+spec:
+  storageClassName: {{ .Values.pvc.storageClass }}
+  accessModes: {{ toYaml .Values.pvc.accessModes | nindent 4 }}
+  dataSourceRef:
+    kind: ReplicationDestination
+    apiGroup: volsync.backube
+    name: {{ $name }}-dst
+  resources:
+    requests:
+      storage: {{ .Values.pvc.capacity }}
+{{- end }}
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: {{ $name }}
+spec:
+  sourcePVC: {{ default $name .Values.pvc.name }}
+  trigger:
+    schedule: {{ include "volsync.schedule" . | quote }}
+  restic:
+    copyMethod: {{ $b.copyMethod }}
+    pruneIntervalDays: {{ $b.pruneIntervalDays }}
+    repository: {{ $name }}-volsync-secret
+    volumeSnapshotClassName: {{ $b.snapshotClass }}
+    cacheCapacity: {{ $b.cache.capacity }}
+    cacheStorageClassName: {{ $b.cache.storageClass }}
+    cacheAccessModes: {{ toYaml $b.cache.accessModes | nindent 6 }}
+    storageClassName: {{ $b.storageClass }}
+    accessModes: {{ toYaml $b.accessModes | nindent 6 }}
+    moverSecurityContext:
+      runAsUser: {{ $b.mover.uid }}
+      runAsGroup: {{ $b.mover.gid }}
+      fsGroup: {{ $b.mover.gid }}
+      fsGroupChangePolicy: OnRootMismatch
+    retain: {{ toYaml $b.retain | nindent 6 }}
+---
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: {{ $name }}-dst
+  labels:
+    kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+spec:
+  trigger:
+    manual: restore-once
+  restic:
+    repository: {{ $name }}-volsync-secret
+    copyMethod: Snapshot
+    volumeSnapshotClassName: {{ $b.snapshotClass }}
+    cacheStorageClassName: {{ $b.cache.storageClass }}
+    cacheAccessModes: {{ toYaml $b.cache.accessModes | nindent 6 }}
+    cacheCapacity: {{ $b.cache.capacity }}
+    storageClassName: {{ $b.storageClass }}
+    accessModes: {{ toYaml $b.accessModes | nindent 6 }}
+    capacity: {{ .Values.pvc.capacity }}
+    moverSecurityContext:
+      runAsUser: {{ $b.mover.uid }}
+      runAsGroup: {{ $b.mover.gid }}
+      fsGroup: {{ $b.mover.gid }}
+      fsGroupChangePolicy: OnRootMismatch
+    enableFileDeletion: true
+    cleanupCachePVC: true
+    cleanupTempPVC: true
+{{- if .Values.externalSecret.enabled }}
+{{- $es := .Values.externalSecret }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $name }}-volsync
+spec:
+  secretStoreRef:
+    kind: {{ $es.storeKind }}
+    name: {{ $es.storeName }}
+  target:
+    name: {{ $name }}-volsync-secret
+    template:
+      engineVersion: v2
+      data:
+        RESTIC_REPOSITORY: "s3:{{ "{{ .endpoint }}" }}/{{ $es.bucket }}/{{ $name }}"
+        RESTIC_PASSWORD: "{{ "{{ .restic_password }}" }}"
+        AWS_ACCESS_KEY_ID: "{{ "{{ .access_key }}" }}"
+        AWS_SECRET_ACCESS_KEY: "{{ "{{ .secret_key }}" }}"
+  data:
+    {{- range $k, $p := dict "access_key" "username" "secret_key" "password" "endpoint" "url" "restic_password" "RESTIC_PASSWORD" }}
+    - secretKey: {{ $k }}
+      remoteRef:
+        key: {{ $es.itemKey | quote }}
+        property: {{ $p }}
+    {{- end }}
+{{- end }}

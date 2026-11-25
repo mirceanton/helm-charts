@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "backup": {
+      "additionalProperties": false,
+      "description": "Backup (ReplicationSource) and restore (ReplicationDestination) settings.",
+      "properties": {
+        "accessModes": {
+          "description": "Access modes for the temporary snapshot/clone volume.",
+          "items": {
+            "type": "string"
+          },
+          "title": "accessModes",
+          "type": "array"
+        },
+        "cache": {
+          "additionalProperties": false,
+          "description": "Restic cache volume settings.",
+          "properties": {
+            "accessModes": {
+              "description": "Access modes of the restic cache volume.",
+              "items": {
+                "type": "string"
+              },
+              "title": "accessModes",
+              "type": "array"
+            },
+            "capacity": {
+              "default": "5Gi",
+              "description": "Size of the restic cache volume.",
+              "title": "capacity",
+              "type": "string"
+            },
+            "storageClass": {
+              "default": "openebs-zfs",
+              "description": "StorageClass of the restic cache volume.",
+              "title": "storageClass",
+              "type": "string"
+            }
+          },
+          "required": [],
+          "title": "cache",
+          "type": "object"
+        },
+        "copyMethod": {
+          "default": "Snapshot",
+          "description": "VolSync copy method for backups.",
+          "enum": [
+            "Snapshot",
+            "Clone",
+            "Direct"
+          ],
+          "title": "copyMethod",
+          "type": "string"
+        },
+        "every": {
+          "default": "12h",
+          "description": "Backup interval in hours (e.g. `4h`, `6h`, `12h`, `24h`); must divide 24 evenly.\nThe minute and hour offset are derived from a hash of `namespace/release` (or `seed`),\nso every app gets a stable but different slot instead of all firing at once.",
+          "pattern": "^([1-9]|1[0-9]|2[0-4])h$",
+          "title": "every",
+          "type": "string"
+        },
+        "finalBackup": {
+          "additionalProperties": false,
+          "description": "On `helm uninstall`, take one last backup before anything is deleted.\nA failed or timed-out backup fails the uninstall, so nothing is lost silently.",
+          "properties": {
+            "enabled": {
+              "default": true,
+              "description": "Run the pre-delete final backup hook.",
+              "title": "enabled",
+              "type": "boolean"
+            },
+            "image": {
+              "additionalProperties": false,
+              "description": "kubectl image used by the hook Job (needs no shell).",
+              "properties": {
+                "repository": {
+                  "default": "registry.k8s.io/kubectl",
+                  "description": "Image repository.",
+                  "title": "repository",
+                  "type": "string"
+                },
+                "tag": {
+                  "default": "v1.37.2",
+                  "description": "Image tag.",
+                  "title": "tag",
+                  "type": "string"
+                }
+              },
+              "required": [],
+              "title": "image",
+              "type": "object"
+            },
+            "timeoutSeconds": {
+              "default": 3600,
+              "description": "Max seconds to wait for the final backup. Keep Flux's `uninstall.timeout` above this.",
+              "minimum": 60,
+              "title": "timeoutSeconds",
+              "type": "integer"
+            }
+          },
+          "required": [],
+          "title": "finalBackup",
+          "type": "object"
+        },
+        "mover": {
+          "additionalProperties": false,
+          "description": "UID/GID the restic mover runs as (also used as fsGroup).",
+          "properties": {
+            "gid": {
+              "default": 1000,
+              "description": "Mover GID and fsGroup.",
+              "title": "gid",
+              "type": "integer"
+            },
+            "uid": {
+              "default": 1000,
+              "description": "Mover UID.",
+              "title": "uid",
+              "type": "integer"
+            }
+          },
+          "required": [],
+          "title": "mover",
+          "type": "object"
+        },
+        "pruneIntervalDays": {
+          "default": 14,
+          "description": "How often (in days) restic prunes the repository.",
+          "minimum": 1,
+          "title": "pruneIntervalDays",
+          "type": "integer"
+        },
+        "retain": {
+          "additionalProperties": true,
+          "description": "Restic retention policy.",
+          "properties": {
+            "daily": {
+              "default": 7,
+              "title": "daily",
+              "type": "integer"
+            },
+            "hourly": {
+              "default": 6,
+              "title": "hourly",
+              "type": "integer"
+            }
+          },
+          "required": [],
+          "title": "retain",
+          "type": "object"
+        },
+        "schedule": {
+          "default": "",
+          "description": "Manual cron expression. If set, it takes precedence over `every`.",
+          "title": "schedule",
+          "type": "string"
+        },
+        "seed": {
+          "default": "",
+          "description": "Override the hash input used to derive the schedule offset. Change it if two apps collide.",
+          "title": "seed",
+          "type": "string"
+        },
+        "snapshotClass": {
+          "default": "openebs-snapshots",
+          "description": "VolumeSnapshotClass used for Snapshot copies.",
+          "title": "snapshotClass",
+          "type": "string"
+        },
+        "storageClass": {
+          "default": "openebs-zfs",
+          "description": "StorageClass for the temporary snapshot/clone volume.",
+          "title": "storageClass",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "backup",
+      "type": "object"
+    },
+    "externalSecret": {
+      "additionalProperties": false,
+      "description": "ExternalSecret that builds the restic repository credentials secret.",
+      "properties": {
+        "bucket": {
+          "default": "home-ops-volsync",
+          "description": "S3 bucket; each app gets its own `\u003cbucket\u003e/\u003cname\u003e` restic repository.",
+          "title": "bucket",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Create the ExternalSecret. Disable it to bring your own `\u003cname\u003e-volsync-secret`.",
+          "title": "enabled",
+          "type": "boolean"
+        },
+        "itemKey": {
+          "default": "Garage HomeOps Backups Key",
+          "description": "Secret store item holding the `username`, `password`, `url` and `RESTIC_PASSWORD` properties.",
+          "title": "itemKey",
+          "type": "string"
+        },
+        "storeKind": {
+          "default": "ClusterSecretStore",
+          "description": "Kind of the secret store.",
+          "enum": [
+            "ClusterSecretStore",
+            "SecretStore"
+          ],
+          "title": "storeKind",
+          "type": "string"
+        },
+        "storeName": {
+          "default": "onepassword",
+          "description": "Name of the secret store.",
+          "title": "storeName",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "externalSecret",
+      "type": "object"
+    },
+    "global": {
+      "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
+      "required": [],
+      "title": "global",
+      "type": "object"
+    },
+    "nameOverride": {
+      "default": "",
+      "description": "Name used for all rendered resources. Defaults to the release name.",
+      "title": "nameOverride",
+      "type": "string"
+    },
+    "pvc": {
+      "additionalProperties": false,
+      "description": "The application PVC. On first creation it is restored from the latest backup via the ReplicationDestination.",
+      "properties": {
+        "accessModes": {
+          "description": "Access modes of the PVC.",
+          "items": {
+            "type": "string"
+          },
+          "title": "accessModes",
+          "type": "array"
+        },
+        "capacity": {
+          "default": "5Gi",
+          "description": "Size of the PVC (also used as the restore capacity).",
+          "title": "capacity",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "description": "Create the PVC. Disable it if the app chart creates its own PVC.",
+          "title": "enabled",
+          "type": "boolean"
+        },
+        "name": {
+          "default": "",
+          "description": "PVC name. Defaults to the app name.",
+          "title": "name",
+          "type": "string"
+        },
+        "storageClass": {
+          "default": "openebs-zfs",
+          "description": "StorageClass of the PVC.",
+          "title": "storageClass",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "pvc",
+      "type": "object"
+    }
+  },
+  "required": [],
+  "type": "object"
+}

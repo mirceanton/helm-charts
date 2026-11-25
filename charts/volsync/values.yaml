@@ -1,0 +1,205 @@
+---
+# @schema
+# type: string
+# @schema
+# -- Name used for all rendered resources. Defaults to the release name.
+nameOverride: ""
+
+# @schema
+# type: object
+# additionalProperties: false
+# @schema
+# -- The application PVC. On first creation it is restored from the latest backup via the ReplicationDestination.
+pvc:
+  # @schema
+  # type: boolean
+  # @schema
+  # -- Create the PVC. Disable it if the app chart creates its own PVC.
+  enabled: true
+  # @schema
+  # type: string
+  # @schema
+  # -- PVC name. Defaults to the app name.
+  name: ""
+  # @schema
+  # type: string
+  # @schema
+  # -- StorageClass of the PVC.
+  storageClass: openebs-zfs
+  # @schema
+  # type: array
+  # items: { type: string }
+  # @schema
+  # -- Access modes of the PVC.
+  accessModes: [ReadWriteOnce]
+  # @schema
+  # type: string
+  # @schema
+  # -- Size of the PVC (also used as the restore capacity).
+  capacity: 5Gi
+
+# @schema
+# type: object
+# additionalProperties: false
+# @schema
+# -- Backup (ReplicationSource) and restore (ReplicationDestination) settings.
+backup:
+  # @schema
+  # type: string
+  # @schema
+  # -- Manual cron expression. If set, it takes precedence over `every`.
+  schedule: ""
+  # @schema
+  # type: string
+  # pattern: ^([1-9]|1[0-9]|2[0-4])h$
+  # @schema
+  # -- Backup interval in hours (e.g. `4h`, `6h`, `12h`, `24h`); must divide 24 evenly.
+  # The minute and hour offset are derived from a hash of `namespace/release` (or `seed`),
+  # so every app gets a stable but different slot instead of all firing at once.
+  every: 12h
+  # @schema
+  # type: string
+  # @schema
+  # -- Override the hash input used to derive the schedule offset. Change it if two apps collide.
+  seed: ""
+  # @schema
+  # type: string
+  # enum: [Snapshot, Clone, Direct]
+  # @schema
+  # -- VolSync copy method for backups.
+  copyMethod: Snapshot
+  # @schema
+  # type: string
+  # @schema
+  # -- VolumeSnapshotClass used for Snapshot copies.
+  snapshotClass: openebs-snapshots
+  # @schema
+  # type: integer
+  # minimum: 1
+  # @schema
+  # -- How often (in days) restic prunes the repository.
+  pruneIntervalDays: 14
+  # @schema
+  # type: object
+  # additionalProperties: true
+  # @schema
+  # -- Restic retention policy.
+  retain:
+    hourly: 6
+    daily: 7
+  # @schema
+  # type: object
+  # additionalProperties: false
+  # @schema
+  # -- Restic cache volume settings.
+  cache:
+    # @schema
+    # type: string
+    # @schema
+    # -- Size of the restic cache volume.
+    capacity: 5Gi
+    # @schema
+    # type: string
+    # @schema
+    # -- StorageClass of the restic cache volume.
+    storageClass: openebs-zfs
+    # @schema
+    # type: array
+    # items: { type: string }
+    # @schema
+    # -- Access modes of the restic cache volume.
+    accessModes: [ReadWriteOnce]
+  # @schema
+  # type: string
+  # @schema
+  # -- StorageClass for the temporary snapshot/clone volume.
+  storageClass: openebs-zfs
+  # @schema
+  # type: array
+  # items: { type: string }
+  # @schema
+  # -- Access modes for the temporary snapshot/clone volume.
+  accessModes: [ReadWriteOnce]
+  # @schema
+  # type: object
+  # additionalProperties: false
+  # @schema
+  # -- UID/GID the restic mover runs as (also used as fsGroup).
+  mover:
+    # @schema
+    # type: integer
+    # @schema
+    # -- Mover UID.
+    uid: 1000
+    # @schema
+    # type: integer
+    # @schema
+    # -- Mover GID and fsGroup.
+    gid: 1000
+  # @schema
+  # type: object
+  # additionalProperties: false
+  # @schema
+  # -- On `helm uninstall`, take one last backup before anything is deleted.
+  # A failed or timed-out backup fails the uninstall, so nothing is lost silently.
+  finalBackup:
+    # @schema
+    # type: boolean
+    # @schema
+    # -- Run the pre-delete final backup hook.
+    enabled: true
+    # @schema
+    # type: integer
+    # minimum: 60
+    # @schema
+    # -- Max seconds to wait for the final backup. Keep Flux's `uninstall.timeout` above this.
+    timeoutSeconds: 3600
+    # @schema
+    # type: object
+    # additionalProperties: false
+    # @schema
+    # -- kubectl image used by the hook Job (needs no shell).
+    image:
+      # @schema
+      # type: string
+      # @schema
+      # -- Image repository.
+      repository: registry.k8s.io/kubectl
+      # @schema
+      # type: string
+      # @schema
+      # -- Image tag.
+      tag: v1.37.2
+
+# @schema
+# type: object
+# additionalProperties: false
+# @schema
+# -- ExternalSecret that builds the restic repository credentials secret.
+externalSecret:
+  # @schema
+  # type: boolean
+  # @schema
+  # -- Create the ExternalSecret. Disable it to bring your own `<name>-volsync-secret`.
+  enabled: true
+  # @schema
+  # type: string
+  # enum: [ClusterSecretStore, SecretStore]
+  # @schema
+  # -- Kind of the secret store.
+  storeKind: ClusterSecretStore
+  # @schema
+  # type: string
+  # @schema
+  # -- Name of the secret store.
+  storeName: onepassword
+  # @schema
+  # type: string
+  # @schema
+  # -- Secret store item holding the `username`, `password`, `url` and `RESTIC_PASSWORD` properties.
+  itemKey: Garage HomeOps Backups Key
+  # @schema
+  # type: string
+  # @schema
+  # -- S3 bucket; each app gets its own `<bucket>/<name>` restic repository.
+  bucket: home-ops-volsync
