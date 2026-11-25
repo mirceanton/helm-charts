@@ -138,19 +138,18 @@
           "properties": {
             "daily": {
               "default": 7,
+              "description": "Daily snapshots to keep.",
               "title": "daily",
               "type": "integer"
             },
             "hourly": {
               "default": 6,
+              "description": "Hourly snapshots to keep.",
               "title": "hourly",
               "type": "integer"
             }
           },
-          "required": [
-            "hourly",
-            "daily"
-          ],
+          "required": [],
           "title": "retain",
           "type": "object"
         },

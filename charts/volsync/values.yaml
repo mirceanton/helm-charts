@@ -82,11 +82,20 @@ backup:
   # @schema
   # type: object
   # additionalProperties: true
-  # required: []
   # @schema
   # -- Restic retention policy.
   retain:
+    # @schema
+    # type: integer
+    # required: false
+    # @schema
+    # -- Hourly snapshots to keep.
     hourly: 6
+    # @schema
+    # type: integer
+    # required: false
+    # @schema
+    # -- Daily snapshots to keep.
     daily: 7
   # @schema
   # type: object

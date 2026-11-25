@@ -84,6 +84,8 @@ The inline `chart.kind: OCIRepository` form needs Flux v2.10 or newer. On older 
 | backup.mover.uid | int | `1000` | Mover UID. |
 | backup.pruneIntervalDays | int | `14` | How often (in days) restic prunes the repository. |
 | backup.retain | object | `{"daily":7,"hourly":6}` | Restic retention policy. |
+| backup.retain.daily | int | `7` | Daily snapshots to keep. |
+| backup.retain.hourly | int | `6` | Hourly snapshots to keep. |
 | backup.schedule | string | `""` | Manual cron expression. If set, it takes precedence over `every`. |
 | backup.seed | string | `""` | Override the hash input used to derive the schedule offset. Change it if two apps collide. |
 | backup.snapshotClass | string | `"openebs-snapshots"` | VolumeSnapshotClass used for Snapshot copies. |
