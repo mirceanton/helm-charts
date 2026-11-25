@@ -82,6 +82,7 @@ backup:
   # @schema
   # type: object
   # additionalProperties: true
+  # required: []
   # @schema
   # -- Restic retention policy.
   retain:
