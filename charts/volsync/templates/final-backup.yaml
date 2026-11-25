@@ -1,0 +1,78 @@
+{{- if .Values.backup.finalBackup.enabled }}
+{{- $name := include "volsync.name" . }}
+{{- $fb := .Values.backup.finalBackup }}
+{{- $trigger := printf "final-backup-r%d" .Release.Revision }}
+{{- $hook := dict "helm.sh/hook" "pre-delete" "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded" }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}-final-backup
+  annotations: {{- toYaml (merge (dict "helm.sh/hook-weight" "-10") $hook) | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}-final-backup
+  annotations: {{- toYaml (merge (dict "helm.sh/hook-weight" "-10") $hook) | nindent 4 }}
+rules:
+  - apiGroups: [volsync.backube]
+    resources: [replicationsources]
+    resourceNames: [{{ $name }}]
+    verbs: [get, list, watch, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}-final-backup
+  annotations: {{- toYaml (merge (dict "helm.sh/hook-weight" "-10") $hook) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}-final-backup
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}-final-backup
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-final-backup
+  annotations: {{- toYaml (merge (dict "helm.sh/hook-weight" "0") $hook) | nindent 4 }}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ $fb.timeoutSeconds }}
+  template:
+    spec:
+      serviceAccountName: {{ $name }}-final-backup
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: { type: RuntimeDefault }
+      initContainers:
+        # Switch the ReplicationSource to a one-off manual trigger (pauses the cron schedule).
+        - name: trigger
+          image: "{{ $fb.image.repository }}:{{ $fb.image.tag }}"
+          args:
+            - patch
+            - replicationsource/{{ $name }}
+            - --type=merge
+            - -p
+            - '{"spec":{"trigger":{"schedule":null,"manual":"{{ $trigger }}"}}}'
+          securityContext: &sc
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+      containers:
+        # VolSync copies spec.trigger.manual into status.lastManualSync once the backup has finished.
+        - name: wait
+          image: "{{ $fb.image.repository }}:{{ $fb.image.tag }}"
+          args:
+            - wait
+            - replicationsource/{{ $name }}
+            - --for=jsonpath={.status.lastManualSync}={{ $trigger }}
+            - --timeout={{ $fb.timeoutSeconds }}s
+          securityContext: *sc
+{{- end }}
